@@ -1,4 +1,5 @@
 var handler = require('../request-handler');
+var messages = require('../request-handler');
 var expect = require('chai').expect;
 var stubs = require('./Stubs');
 
@@ -57,13 +58,14 @@ describe('Node Server Request Listener Function', function() {
     var res = new stubs.response();
 
     handler.requestHandler(req, res);
-
+    stubMsg['message_id'] = 1;
     // Expect 201 Created response status
     expect(res._responseCode).to.equal(201);
 
     // Testing for a newline isn't a valid test
     // TODO: Replace with with a valid test
-    // expect(res._data).to.equal(JSON.stringify('\n'));
+    console.log('LOOK HERE >>> ', res._data);
+    expect(res._data).to.equal(JSON.stringify(stubMsg));
     expect(res._ended).to.equal(true);
   });
 
@@ -101,6 +103,48 @@ describe('Node Server Request Listener Function', function() {
 
     expect(res._responseCode).to.equal(404);
     expect(res._ended).to.equal(true);
+  });
+
+  it('Should 204 when sending OPTIONS request', function() {
+
+    var req = new stubs.request('/classes/messages', 'OPTIONS');
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    // Expect 204 status
+    expect(res._responseCode).to.equal(204);
+
+    expect(res._ended).to.equal(true);
+  });
+
+  it('Should add message_id property to message when handling POST requests', function() {
+    var stubMsg = {
+      username: 'Jono',
+      text: 'Do my bidding!'
+    };
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+    var parsedBody = JSON.parse(res._data);
+    expect(parsedBody).to.have.property('message_id');
+  });
+
+  it('Should add new messages to beginning of results array', function() {
+
+    var stubMsg = {
+      username: 'Jono',
+      text: 'Do my bidding!'
+    };
+
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+    var parsedBody = JSON.parse(res._data);
+    messages.messages.results.unshift(parsedBody);
+    expect(messages.messages.results[0]).to.equal(parsedBody);
   });
 
 });

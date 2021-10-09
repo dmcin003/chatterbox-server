@@ -14,13 +14,12 @@
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'content-type, accept',
+  'access-control-allow-headers': 'authorization,content-type',
   'access-control-max-age': 10 // Seconds.
 };
 
-var messages = {results: []};
-var id = 0;
-debugger;
+var messages = {results: [{username: 'whatever', text: 'hello', roomname: 'room1', 'message_id': '0'}]};
+var id = 1;
 var requestHandler = function(request, response) {
   console.log('REQUEST >>>>> ', request.on);
   // console.log('request>> ', request, 'response >> ', response);
@@ -47,8 +46,7 @@ var requestHandler = function(request, response) {
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
   headers['Content-Type'] = 'application/json';
-  //three cases
-  //keep track of id from messages
+  //three good cases one bad request case
 
   if (request.method === 'GET' && request.url === '/classes/messages') {
     statusCode = 200;
@@ -60,19 +58,20 @@ var requestHandler = function(request, response) {
     //push message to messages array
     //send back message and statusCode 201
     var temp;
+    response.writeHead(statusCode, headers);
 
     request.on('data', (message) => {
-      console.log('CHUNK >>>> ', JSON.parse(message.toString()));
-      temp = JSON.parse(message.toString());
-      temp.id = id;
+      console.log('CHUNK >>>> ', JSON.parse(message));
+      temp = JSON.parse(message);
+      //keep track of id from messages
+      temp['message_id'] = id;
       console.log('TEMP >> ', temp);
       id++;
-      messages.results.push(temp);
+      messages.results.unshift(temp);
+      response.end((JSON.stringify(temp)));
     });
 
-    response.writeHead(statusCode, headers);
-    response.end((JSON.stringify(temp)));
-  } else if (request.method === 'OPTIONS') {
+  } else if (request.method === 'OPTIONS' && request.url === '/classes/messages') {
     statusCode = 204;
     //send back headers and statusCode 204
     response.writeHead(statusCode, headers);
@@ -116,3 +115,4 @@ var requestHandler = function(request, response) {
 
 
 exports.requestHandler = requestHandler;
+exports.messages = messages;
