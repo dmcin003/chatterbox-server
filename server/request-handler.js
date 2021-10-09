@@ -11,6 +11,11 @@
  *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
  //temp
  **************************************************************/
+
+var http = require('http');
+var fs = require('fs');
+var path = require('path');
+
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -20,10 +25,14 @@ var defaultCorsHeaders = {
 
 var messages = {results: [{username: 'whatever', text: 'hello', roomname: 'room1', 'message_id': '0'}]};
 var id = 1;
+
 var requestHandler = function(request, response) {
   console.log('REQUEST >>>>> ', request.on);
-  // console.log('request>> ', request, 'response >> ', response);
 
+  // fs.readFile('./index.html', 'UTF-8', function(err, html) {
+  //   res.writeHead(200, {'Content-Type': 'text/html'});
+  //   res.end(html);
+  // };
 
   // Request and Response come from node's http module.
   //
@@ -46,7 +55,6 @@ var requestHandler = function(request, response) {
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
   headers['Content-Type'] = 'application/json';
-  //three good cases one bad request case
 
   if (request.method === 'GET' && request.url === '/classes/messages') {
     statusCode = 200;
@@ -63,7 +71,7 @@ var requestHandler = function(request, response) {
     request.on('data', (message) => {
       console.log('CHUNK >>>> ', JSON.parse(message));
       temp = JSON.parse(message);
-      //keep track of id from messages
+
       temp['message_id'] = id;
       console.log('TEMP >> ', temp);
       id++;
@@ -73,7 +81,6 @@ var requestHandler = function(request, response) {
 
   } else if (request.method === 'OPTIONS' && request.url === '/classes/messages') {
     statusCode = 204;
-    //send back headers and statusCode 204
     response.writeHead(statusCode, headers);
     response.end(JSON.stringify(headers));
   } else {
